@@ -1,17 +1,25 @@
 #include "DHT.h"                    // library for the humidity-temperature sensor
 #include <LiquidCrystal_I2C.h>      // library for the LCD Display
+#include <Wire.h>
 LiquidCrystal_I2C lcd(0x27, 20, 4); // set the LCD address to 0x27 for a 16 chars and 2 line display
 
-const float minimum_humidity = 80.00; // (%)
-const float minimum_temp = 26;        // (°C)
+const float minimum_humidity = 65.00; // (%)
+const float minimum_temp = 25;        // (°C)
 
-#define DHTPIN 23                   // Digital pin connected to the DHT sensor
+#define DHTPIN 2                   // Digital pin connected to the DHT sensor
 #define DHTTYPE DHT11
+#define CH1 3
+#define CH2 4
+#define CH3 5
+#define CH4 6
+#define H_12 43200000
+#define H_24 86400000
+
 DHT dht(DHTPIN, DHTTYPE);
 
 unsigned long myTime; // for the time management
-// extern volatile unsigned long timer0_millis;
-volatile unsigned long timer0_millis;
+ extern volatile unsigned long timer0_millis;
+//volatile unsigned long timer0_millis;
 
 
 byte smileyFace[] = {
@@ -27,7 +35,7 @@ byte smileyFace[] = {
 void setup()
 {
   Serial.begin(9600);
-  Serial.println(F("Let's start!"));
+  Wire.setClock(10000);
 
   pinMode(4, OUTPUT);
   pinMode(5, OUTPUT);
@@ -41,10 +49,9 @@ void setup()
   lcd.backlight();
   lcd.clear();
   lcd.createChar(0, smileyFace);
-  lcd.print("Project");
   lcd.setCursor(0, 2);
   lcd.print("ShroomIT");
-  lcd.setCursor(13, 0);
+  lcd.setCursor(13, 2);
   lcd.write(0);
 }
 
@@ -52,7 +59,7 @@ void setup()
 void loop()
 {
   // Wait a few seconds between measurements
-  delay(2000);
+  delay(3000);
 
   float humidity = dht.readHumidity();
   float temp = dht.readTemperature();
@@ -103,15 +110,15 @@ void loop()
 
   Serial.println(myTime); // prints time since program started
 
-  digitalWrite(4, LOW);
+  digitalWrite(CH1, LOW);
 
-  if (myTime > 43200000)
+  if (myTime > H_12)
   {
-    digitalWrite(4, HIGH);
+    digitalWrite(CH1, HIGH);
   }
 
   // when 24h passed, impose the end of the loop
-  if (myTime > 86400000)
+  if (myTime > H_24)
   {
     noInterrupts();
     timer0_millis = 0;
@@ -121,8 +128,8 @@ void loop()
   // setting the atomizer and the fan ON if the humidity is under the minimum humidity
   if (humidity < minimum_humidity)
   {
-    digitalWrite(6, LOW);
-    digitalWrite(7, LOW);
+    digitalWrite(CH3, HIGH);
+    digitalWrite(CH4, HIGH);
     lcd.setCursor(0, 2);
     lcd.print("Umidify:");
     lcd.setCursor(10, 2);
@@ -130,8 +137,8 @@ void loop()
   }
   else
   {
-    digitalWrite(6, HIGH);
-    digitalWrite(7, HIGH);
+    digitalWrite(CH3, LOW);
+    digitalWrite(CH4, LOW);
     lcd.setCursor(0, 2);
     lcd.print("Umidify:");
     lcd.setCursor(10, 2);
@@ -141,7 +148,7 @@ void loop()
   // setting the hot resistance ON if the temperature is under the minimum temperature
   if (temp < minimum_temp)
   {
-    digitalWrite(5, LOW);
+    digitalWrite(CH2, HIGH);
     lcd.setCursor(0, 3);
     lcd.print("Heater:");
     lcd.setCursor(10, 3);
@@ -149,7 +156,7 @@ void loop()
   }
   else
   {
-    digitalWrite(5, HIGH);
+    digitalWrite(CH2, LOW);
     lcd.setCursor(0, 3);
     lcd.print("Heater:");
     lcd.setCursor(10, 3);
