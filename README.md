@@ -16,5 +16,7 @@ ShroomIT is a simple automated mushroom growing project
 
 ## Electronics
 
+<img src="electronics.jpg" alt="rmf_obelix" width="600"/>
+
 ## Code
 
